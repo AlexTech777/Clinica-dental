@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es" data-theme="azul">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Panel administrativo para organizar citas dentales, pacientes y seguimiento.">
+  <title>{% block title %}Sonrisa Clara{% endblock %} · Consultorio dental</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/clinic-appearance.css">
+  <script>try{var t=localStorage.getItem('dental-theme');document.documentElement.dataset.theme=t==='rosa'?'verde':['azul','gris','verde'].includes(t)?t:'azul'}catch(e){}</script>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="/resumen"><span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 5c-4 2-3 8-1 13 1 3 2 9 5 9 2 0 2-5 4-5s2 5 4 5c3 0 4-6 5-9 2-5 3-11-1-13-3-2-6 1-8 1S11 3 8 5Z"/><path d="M12 10c2 2 6 2 8 0"/></svg></span><span><b>sonrisa</b><small>CLARA · CONSULTORIO</small></span></a>
+    <div class="side-label">ESPACIO DE TRABAJO</div>
+    <nav aria-label="Navegación principal">
+      <a class="nav-item {% if active=='resumen' %}active{% endif %}" href="/resumen" {% if active=='resumen' %}aria-current="page"{% endif %}><span class="nav-icon">⌂</span>Resumen</a>
+      <a class="nav-item {% if active=='agenda' %}active{% endif %}" href="/agenda" {% if active=='agenda' %}aria-current="page"{% endif %}><span class="nav-icon">▦</span>Agenda</a>
+      <a class="nav-item {% if active=='pacientes' %}active{% endif %}" href="/pacientes" {% if active=='pacientes' %}aria-current="page"{% endif %}><span class="nav-icon">◉</span>Pacientes</a>
+      <a class="nav-item {% if active=='espera' %}active{% endif %}" href="/lista-espera" {% if active=='espera' %}aria-current="page"{% endif %}><span class="nav-icon">≡</span>Lista de espera</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="sync-mini"><span class="pulse"></span><div><b>{% if calendar.connected %}Calendar conectado{% else %}Modo demostración{% endif %}</b><small>{% if dry_run %}WhatsApp DRY_RUN{% elif twilio.configured %}WhatsApp disponible{% else %}WhatsApp sin configurar{% endif %}</small></div></div>
+      <a class="nav-item {% if active=='configuracion' %}active{% endif %}" href="/configuracion"><span class="nav-icon">⚙</span>Configuración</a>
+      <div class="profile"><span class="avatar">DL</span><span><b>Dra. Laura</b><small>Consultorio dental</small></span><span class="profile-dots">···</span></div>
+    </div>
+  </aside>
+  <main class="main-shell"><header class="topbar"><button class="mobile-menu" type="button" aria-label="Abrir navegación" aria-expanded="false">☰</button><div class="breadcrumb">Consultorio <span>/</span> <b>{% block section_name %}Resumen{% endblock %}</b></div><div class="top-actions"><span class="today-date">{{ today.strftime('%d/%m/%Y') }}</span><span class="top-avatar" aria-label="Dra. Laura">DL</span></div></header>
+    <div class="content">
+      {% if request.query_params.get('flash') %}<div class="flash {{ request.query_params.get('kind','success') }}" role="status"><span>{{ request.query_params.get('flash') }}</span><button type="button" aria-label="Cerrar mensaje" class="flash-close">×</button></div>{% endif %}
+      {% block content %}{% endblock %}
+      <footer class="footer"><span>Sonrisa Clara <span class="dot-sep">·</span> Panel administrativo</span><span>Los datos se guardan localmente en esta instalación.</span></footer>
+    </div>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

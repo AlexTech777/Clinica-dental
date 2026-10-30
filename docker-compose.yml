@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: sqlite:////app/data/dental.db
+      HOST: 0.0.0.0
+    volumes:
+      - dental-data:/app/data
+    restart: unless-stopped
+volumes:
+  dental-data:

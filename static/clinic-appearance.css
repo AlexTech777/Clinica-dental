@@ -1,0 +1,97 @@
+:root {
+  --bg: #edf1ef;
+  --surface: #fff;
+  --surface-alt: #f5f7f6;
+  --ink: #20343a;
+  --ink-strong: #142a31;
+  --muted: #64767c;
+  --line: #d7e0dd;
+  --accent: #087c78;
+  --accent-strong: #06615e;
+  --accent-soft: #e2efed;
+  --green: #176b4a;
+  --green-soft: #e7f0eb;
+  --amber: #805700;
+  --amber-soft: #f3ead7;
+  --rose: #9a3e48;
+  --rose-soft: #f3e7e5;
+  --nav: #102c37;
+  --nav-text: #e0e8e9;
+  --shadow: 0 10px 30px rgba(16, 44, 55, .08);
+}
+
+:root[data-theme="gris"] {
+  --bg: #ecefee;
+  --surface: #fff;
+  --surface-alt: #f5f6f6;
+  --ink: #30383a;
+  --ink-strong: #171d1f;
+  --muted: #687174;
+  --line: #d7dcdd;
+  --accent: #3c5559;
+  --accent-strong: #283e42;
+  --accent-soft: #e6ebeb;
+  --nav: #202a2d;
+  --nav-text: #e2e7e8;
+}
+
+:root[data-theme="verde"] {
+  --bg: #edf1eb;
+  --surface: #fff;
+  --surface-alt: #f5f7f3;
+  --ink: #283b34;
+  --ink-strong: #172a23;
+  --muted: #687970;
+  --line: #d8e0d9;
+  --accent: #176b57;
+  --accent-strong: #105341;
+  --accent-soft: #e4eee8;
+  --nav: #18352d;
+  --nav-text: #e0e9e3;
+}
+
+.main-shell {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(90deg, color-mix(in srgb, var(--bg) 96%, transparent), color-mix(in srgb, var(--bg) 78%, transparent)),
+    url("/static/clinic-background.svg");
+  background-position: right top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.swatch-gray {
+  background: #e7ebea;
+}
+
+.swatch-gray i:first-child {
+  background: #202a2d;
+}
+
+.swatch-gray i:nth-child(3) {
+  background: #3c5559;
+}
+
+.swatch-green {
+  background: #e6ece5;
+}
+
+.swatch-green i:first-child {
+  background: #18352d;
+}
+
+.swatch-green i:nth-child(3) {
+  background: #176b57;
+}
+
+.swatch-blue {
+  background: #e8eeed;
+}
+
+.swatch-blue i:first-child {
+  background: #102c37;
+}
+
+.swatch-blue i:nth-child(3) {
+  background: #087c78;
+}

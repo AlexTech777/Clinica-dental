@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" fill="none">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f2f5f2"/>
+      <stop offset="1" stop-color="#dce5e1"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#d2e0dc"/>
+      <stop offset="1" stop-color="#b9cfca"/>
+    </linearGradient>
+    <linearGradient id="chair" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#326c68"/>
+      <stop offset="1" stop-color="#183d43"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#edf2ef"/>
+      <stop offset="1" stop-color="#aebdb9"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#wall)" d="M0 0h1600v1000H0z"/>
+  <path fill="#d2dcd8" d="M0 746h1600v254H0z"/>
+  <path fill="#f7f9f7" d="M0 734h1600v18H0z"/>
+  <g opacity=".8">
+    <path fill="url(#glass)" d="M120 105h390v475H120z"/>
+    <path stroke="#f6f8f6" stroke-width="14" d="M315 105v475M120 340h390"/>
+    <path fill="#c6d6d1" d="M154 375h325v171H154z"/>
+    <path stroke="#9fb4af" stroke-width="3" d="M154 375h325M154 546h325M180 411h268"/>
+    <path fill="#d4dfdb" d="M560 105h216v475H560z"/>
+    <path stroke="#f7f9f7" stroke-width="12" d="M668 105v475M560 340h216"/>
+  </g>
+  <g opacity=".78">
+    <path fill="#cbd8d4" d="M1318 116h214v610h-214z"/>
+    <path fill="#eaf0ed" d="M1344 144h163v552h-163z"/>
+    <path stroke="#b6c6c1" stroke-width="3" d="M1363 194h126M1363 220h126"/>
+    <path fill="#254c49" d="M1415 511h18v185h-18z"/>
+  </g>
+  <g opacity=".9">
+    <path stroke="#748c89" stroke-linecap="round" stroke-width="17" d="m1054 254 174-87 121 51"/>
+    <path stroke="#9badaa" stroke-linecap="round" stroke-width="9" d="m1054 254 174-87 121 51"/>
+    <path fill="#19383d" d="M1320 171c8-16 29-19 41-6l42 48c7 8 6 20-2 27l-31 26c-9 7-22 5-28-4l-36-53c-7-10-2-29 14-38Z"/>
+    <path fill="#dce7e3" d="m1331 195 37-25c5-3 11-2 15 2l26 31-63 42-22-35c-3-5-1-12 7-15Z"/>
+    <circle cx="1380" cy="210" r="13" fill="#a4c2b9"/>
+  </g>
+  <g>
+    <path fill="#274b4d" d="M1023 345c0-22 18-40 40-40h62c19 0 35 14 38 33l35 203-171 31-40-227c-1-1-1 0-1 0Z"/>
+    <path fill="url(#chair)" d="M1103 543c-8-28 9-57 37-64l181-44c26-6 52 10 58 36l22 87-263 63-35-78Z"/>
+    <path fill="#23484a" d="m1252 618 174-42 38 51-178 49-34-58Z"/>
+    <path stroke="#748c89" stroke-linecap="round" stroke-width="22" d="m1173 671-38 104m250-160 39 144"/>
+    <path stroke="#536f6d" stroke-linecap="round" stroke-width="15" d="m1127 782 313-8"/>
+    <path fill="#dbe4e0" d="M1010 294c0-23 18-41 41-41h42c22 0 40 18 40 41v22h-123v-22Z"/>
+    <path fill="#315c59" d="M1036 273h39v29h-39z"/>
+  </g>
+  <g opacity=".9">
+    <path fill="url(#metal)" d="M829 640h121v12H829z"/>
+    <path stroke="#738984" stroke-width="8" d="M888 650v104"/>
+    <path fill="#d7e0dc" d="M836 751h105l20 14H815l21-14Z"/>
+    <path fill="#496d68" d="M831 597h118v40H831z"/>
+    <path fill="#fff" d="M840 606h100v8H840z"/>
+    <path fill="#9db8af" d="M851 623h24v7h-24zM883 623h24v7h-24zM915 623h24v7h-24z"/>
+    <path stroke="#456762" stroke-linecap="round" stroke-width="6" d="M952 618c33-8 39-35 42-67"/>
+  </g>
+  <path fill="#f8faf8" opacity=".58" d="M0 884c244-51 450-35 650 12 231 55 485 48 950-22v126H0V884Z"/>
+</svg>
