@@ -84,3 +84,13 @@ Cubren el parser de Calendar y de respuestas de WhatsApp, reglas de seguimiento 
 ## Configuración de publicación
 
 Antes de alojar el panel para un consultorio real, configura HTTPS, autenticación, respaldos, una cuenta de servicio con acceso limitado al calendario correcto y las plantillas aprobadas de WhatsApp. Conserva `DRY_RUN=true` hasta verificar ambos conectores.
+
+Iniciar - Aplicación local
+
+.\.venv\Scripts\Activate.ps1
+
+python main.py
+
+Con Docker:
+
+docker compose up --build
