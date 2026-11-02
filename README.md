@@ -66,7 +66,7 @@ Los recordatorios están previstos 48 y 3 horas antes, solo entre las 09:00 y 20
 
 ## Temas y preferencias
 
-En **Configuración** elige Grafito y acero, Verde profundo o Azul petróleo. El tema se aplica inmediatamente y se guarda en el navegador. El horario permitido y DRY_RUN se guardan en SQLite.
+En **Configuración** elige Grafito y mandarina, Verde intenso o Azul eléctrico. El tema se aplica inmediatamente y se guarda en el navegador. El horario permitido y DRY_RUN se guardan en SQLite.
 
 ## Seguridad y datos
 
@@ -90,14 +90,14 @@ Antes de alojar el panel para un consultorio real, configura HTTPS, autenticaci�
 
 ### Publicación en Render
 
-El servicio existente `dental-app:latest` usa la imagen pública `docker.io/alextech777/dental-app:latest`. Render no despliega automáticamente nuevas imágenes del registro; se deben publicar en Docker Hub y activar **Manual Deploy** en el servicio existente. La versión con la revisión de agenda está publicada con la etiqueta `2026-11-02-agenda-manana` y también como `latest`.
+El servicio existente `dental-app:latest` usa la imagen pública `docker.io/alextech777/dental-app:latest`. Render no despliega automáticamente nuevas imágenes del registro; se deben publicar en Docker Hub y activar **Manual Deploy** en el servicio existente. La versión con la interfaz vibrante está publicada con las etiquetas `2026-11-02-ui-vibrante` y `latest`.
 
 Para construir y publicar otra versión desde la raíz del repositorio en Windows PowerShell, usa una etiqueta nueva y luego actualiza `latest`:
 
 ```powershell
-docker build -t alextech777/dental-app:2026-11-02-agenda-manana .
-docker push alextech777/dental-app:2026-11-02-agenda-manana
-docker tag alextech777/dental-app:2026-11-02-agenda-manana alextech777/dental-app:latest
+docker build -t alextech777/dental-app:2026-11-02-ui-vibrante .
+docker push alextech777/dental-app:2026-11-02-ui-vibrante
+docker tag alextech777/dental-app:2026-11-02-ui-vibrante alextech777/dental-app:latest
 docker push alextech777/dental-app:latest
 ```
 
