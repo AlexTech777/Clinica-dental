@@ -33,15 +33,18 @@ Google Calendar continúa siendo la agenda principal y Sonrisa Clara añade gest
 
 ### Dashboard
 
-![Dashboard](docs/images/dashboard.png)
+<img width="2546" height="1246" alt="dashboard" src="https://github.com/user-attachments/assets/aeb59ac8-278b-4620-ab88-8ad2a0fb019c" />
+
 
 ### Agenda
 
-![Agenda](docs/images/agenda.png)
+<img width="2546" height="1258" alt="agenda" src="https://github.com/user-attachments/assets/4ca36378-985b-4251-a310-377e86849f5d" />
+
 
 ### Pacientes
 
-![Pacientes](docs/images/pacientes.png)
+<img width="2553" height="1271" alt="pascientes" src="https://github.com/user-attachments/assets/8ff2c40f-c8b3-45d1-a1bb-926d44ce48da" />
+
 
 ---
 
