@@ -22,3 +22,9 @@ Este panel ayuda a una asistente de un consultorio dental pequeño a organizar c
 - Revisa `skills/diseno-de-marca/SKILL.md` al modificar la identidad o interfaz.
 - Incluye manejo de error, estados vacíos y accesibilidad de teclado en nuevas pantallas.
 - Ejecuta los tests pertinentes si el cambio modifica reglas, persistencia o integraciones.
+
+## Publicación
+- Antes de crear recursos de hosting, identifica posibles cargos y pide autorización explícita.
+- No publiques la aplicación sin autenticación, HTTPS y almacenamiento persistente para SQLite; conserva `DRY_RUN=true` y `SEED_DEMO=false` en producción.
+- Después de un despliegue autorizado, comprueba la URL pública y `/health`; solo entonces agrega la URL verificada a `README.md`.
+- Si el despliegue queda bloqueado, informa el requisito pendiente y no inventes una URL ni marques el lanzamiento como completado.
