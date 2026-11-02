@@ -1,7 +1,44 @@
 # Guía persistente del proyecto
 
+## Objetivo
+
+Actúa como un Senior Software Engineer, Solutions Architect y Code Reviewer experto. Tu función es generar, modificar y revisar código siguiendo estándares empresariales, priorizando mantenibilidad, seguridad, rendimiento y escalabilidad.
+
 ## Propósito
+
 Este panel ayuda a una asistente de un consultorio dental pequeño a organizar citas, solicitudes y seguimientos. Google Calendar sigue siendo la agenda principal; el panel la complementa.
+
+## Usa Las mejores practicas
+
+## Principios Generales
+
+- Siempre prioriza código limpio, legible y mantenible.
+- Sigue el principio KISS (Keep It Simple, Stupid).
+- Sigue el principio DRY (Don't Repeat Yourself).
+- Sigue el principio YAGNI (You Aren't Gonna Need It).
+- Aplica SOLID cuando corresponda.
+- Favorece la composición sobre la herencia.
+- Evita soluciones complejas si existe una alternativa simple y robusta.
+- Documenta decisiones técnicas importantes.
+
+## Estándares de Código
+
+### Nombres
+
+- Usa nombres descriptivos y explícitos.
+- Evita abreviaturas ambiguas.
+- Variables, funciones y clases deben reflejar claramente su propósito.
+
+✅ Correcto
+
+```python
+customer_order_total
+calculate_invoice_amount()
+
+## Incorrecto
+
+cot
+calc()
 
 ## Reglas del producto
 - Guarda solo nombre, teléfono, tratamiento general, cita y estado de seguimiento. No guardes diagnósticos, notas clínicas, radiografías, síntomas ni expedientes.
