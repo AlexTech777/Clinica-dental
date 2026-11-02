@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es" data-theme="azul">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Acceso al panel administrativo de Sonrisa Clara.">
+  <title>{% if mode == "register" %}Crear cuenta{% else %}Iniciar sesión{% endif %} · Sonrisa Clara</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/clinic-appearance.css">
+  <link rel="stylesheet" href="/static/auth.css">
+</head>
+<body class="auth-body">
+  <main class="auth-card">
+    <a class="auth-brand" href="/auth/login" aria-label="Sonrisa Clara, inicio">
+      <span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 5c-4 2-3 8-1 13 1 3 2 9 5 9 2 0 2-5 4-5s2 5 4 5c3 0 4-6 5-9 2-5 3-11-1-13-3-2-6 1-8 1S11 3 8 5Z"/><path d="M12 10c2 2 6 2 8 0"/></svg></span>
+      <span><b>sonrisa</b><small>CLARA · CONSULTORIO</small></span>
+    </a>
+    <p class="auth-eyebrow">ACCESO AL CONSULTORIO</p>
+    <h1>{% if mode == "register" %}Crea tu cuenta{% else %}Tu consultorio, en orden{% endif %}</h1>
+    <p class="auth-intro">{% if mode == "register" %}Registra tu correo y crea una contraseña para ingresar al panel.{% else %}Inicia sesión para gestionar citas y seguimientos.{% endif %}</p>
+    {% if error %}<p class="auth-message error" role="alert">{{ error }}</p>{% endif %}
+    {% if message %}<p class="auth-message success" role="status">{{ message }}</p>{% endif %}
+    <form class="auth-form" action="{% if mode == 'register' %}/auth/register{% else %}/auth/login{% endif %}" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="email">Correo electrónico</label>
+      <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required autofocus>
+      <label for="password">Contraseña</label>
+      <input id="password" name="password" type="password" autocomplete="{% if mode == 'register' %}new-password{% else %}current-password{% endif %}" minlength="12" maxlength="128" required>
+      {% if mode == "register" %}
+      <label for="password-confirmation">Confirma tu contraseña</label>
+      <input id="password-confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+      {% endif %}
+      <button class="button primary auth-submit" type="submit">{% if mode == "register" %}Crear cuenta{% else %}Iniciar sesión{% endif %}</button>
+    </form>
+    {% if mode == "register" %}
+    <p class="auth-switch">¿Ya tienes cuenta? <a href="/auth/login">Iniciar sesión</a></p>
+    {% else %}
+    <p class="auth-switch">¿No tienes cuenta? <a href="/auth/register">Crear cuenta</a></p>
+    {% endif %}
+    <p class="auth-note">Las cuentas comparten el mismo espacio y los datos del consultorio.</p>
+  </main>
+</body>
+</html>

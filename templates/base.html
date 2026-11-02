@@ -20,10 +20,11 @@
     </nav>
     <div class="sidebar-bottom"><div class="sync-mini"><span class="pulse"></span><div><b>{% if calendar.connected %}Calendar conectado{% else %}Modo demostración{% endif %}</b><small>{% if dry_run %}WhatsApp DRY_RUN{% elif twilio.configured %}WhatsApp disponible{% else %}WhatsApp sin configurar{% endif %}</small></div></div>
       <a class="nav-item {% if active=='configuracion' %}active{% endif %}" href="/configuracion"><span class="nav-icon">⚙</span>Configuración</a>
-      <div class="profile"><span class="avatar">DL</span><span><b>Dra. Laura</b><small>Consultorio dental</small></span><span class="profile-dots">···</span></div>
+      <form class="logout-form" action="/auth/logout" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="nav-item logout-button" type="submit"><span class="nav-icon" aria-hidden="true">↪</span>Cerrar sesión</button></form>
+      <div class="profile"><span class="avatar">US</span><span><b>Cuenta del consultorio</b><small>{{ request.state.user_email }}</small></span></div>
     </div>
   </aside>
-  <main class="main-shell"><header class="topbar"><button class="mobile-menu" type="button" aria-label="Abrir navegación" aria-expanded="false">☰</button><div class="breadcrumb">Consultorio <span>/</span> <b>{% block section_name %}Resumen{% endblock %}</b></div><div class="top-actions"><span class="today-date">{{ today.strftime('%d/%m/%Y') }}</span><span class="top-avatar" aria-label="Dra. Laura">DL</span></div></header>
+  <main class="main-shell"><header class="topbar"><button class="mobile-menu" type="button" aria-label="Abrir navegación" aria-expanded="false">☰</button><div class="breadcrumb">Consultorio <span>/</span> <b>{% block section_name %}Resumen{% endblock %}</b></div><div class="top-actions"><span class="today-date">{{ today.strftime('%d/%m/%Y') }}</span><span class="top-avatar" aria-label="Cuenta del consultorio">US</span></div></header>
     <div class="content">
       {% if request.query_params.get('flash') %}<div class="flash {{ request.query_params.get('kind','success') }}" role="status"><span>{{ request.query_params.get('flash') }}</span><button type="button" aria-label="Cerrar mensaje" class="flash-close">×</button></div>{% endif %}
       {% block content %}{% endblock %}

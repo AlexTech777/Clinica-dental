@@ -70,7 +70,10 @@ En **Configuración** elige Grafito y mandarina, Verde intenso o Azul eléctrico
 
 ## Seguridad y datos
 
-- Este demo no trae acceso público multiusuario ni despliegue TLS incluido. En `.env` configura `ADMIN_USERNAME` y una contraseña larga `ADMIN_PASSWORD` para activar autenticación básica, y publica el servicio solo detrás de HTTPS. No expongas una instancia abierta a Internet.
+- El panel ofrece inicio de sesión y registro con correo y contraseña de al menos 12 caracteres. Las contraseñas se guardan con hash; las sesiones usan una cookie firmada. Cada cuenta tiene acceso al mismo espacio, pacientes, citas y lista de espera.
+- El registro está abierto: cualquier persona que encuentre la URL puede crear una cuenta e ingresar a los datos compartidos. Úsalo solo como demo con datos ficticios; no ingreses información real de pacientes mientras el registro sea público.
+- SQLite guarda las cuentas junto con los demás datos. En el disco efímero del Render gratuito, las cuentas y la información pueden perderse al reemplazar la instancia. Para conservarlas, configura almacenamiento persistente antes de usarlo.
+- Configura `SESSION_SECRET_KEY` en `.env` y en Render. Para generar una clave aleatoria en PowerShell: `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Guárdala como variable de entorno; no la publiques ni la agregues a Git. Publica el servicio detrás de HTTPS.
 - El webhook de Twilio rechaza solicitudes sin firma válida.
 - No se guarda el texto de mensajes, diagnóstico ni notas clínicas. SQLite sí contiene nombres, teléfonos, tratamiento general, citas y estados operativos. Protege el equipo/volumen con controles del sistema operativo y copias de seguridad seguras.
 - `STOP` evita todos los envíos futuros a ese teléfono, incluso si está en la lista de espera.
@@ -82,7 +85,7 @@ En **Configuración** elige Grafito y mandarina, Verde intenso o Azul eléctrico
 python -m pytest -q
 ```
 
-Cubren el parser de Calendar y de respuestas de WhatsApp, reglas de seguimiento y compatibilidad de espera, validación/guardado de citas y separación de listas por pantalla.
+Cubren el inicio de sesión, registro, cierre de sesión y acceso protegido, además del parser de Calendar y WhatsApp, las reglas de seguimiento, la validación y guardado de citas y la separación de listas por pantalla.
 
 ## Configuración de publicación
 
@@ -90,18 +93,18 @@ Antes de alojar el panel para un consultorio real, configura HTTPS, autenticaci�
 
 ### Publicación en Render
 
-El servicio existente `dental-app:latest` usa la imagen pública `docker.io/alextech777/dental-app:latest`. Render no despliega automáticamente nuevas imágenes del registro; se deben publicar en Docker Hub y activar **Manual Deploy** en el servicio existente. La versión con la interfaz vibrante está publicada con las etiquetas `2026-11-02-ui-vibrante` y `latest`.
+El servicio Render existente usa una imagen de Docker Hub con el formato `tu-usuario/dental-app:latest`. `tu-usuario` es un ejemplo: reemplázalo por tu espacio de nombres de Docker Hub al construir y publicar. Conserva en Render la ruta real de la imagen que ya tiene configurada. Render no despliega automáticamente nuevas imágenes del registro; después de publicarlas, se debe activar **Manual Deploy** en el servicio existente.
 
 Para construir y publicar otra versión desde la raíz del repositorio en Windows PowerShell, usa una etiqueta nueva y luego actualiza `latest`:
 
 ```powershell
-docker build -t alextech777/dental-app:2026-11-02-ui-vibrante .
-docker push alextech777/dental-app:2026-11-02-ui-vibrante
-docker tag alextech777/dental-app:2026-11-02-ui-vibrante alextech777/dental-app:latest
-docker push alextech777/dental-app:latest
+docker build -t tu-usuario/dental-app:2026-11-02-login-cuenta .
+docker push tu-usuario/dental-app:2026-11-02-login-cuenta
+docker tag tu-usuario/dental-app:2026-11-02-login-cuenta tu-usuario/dental-app:latest
+docker push tu-usuario/dental-app:latest
 ```
 
-En Render, abre el servicio existente y agrega en **Environment** `APP_ENV=production`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DRY_RUN=true` y `SEED_DEMO=false`. Define el usuario y la contraseña allí; no los incluyas en el código ni en Git. Después abre **Manual Deploy** y despliega la última imagen. El middleware exige las credenciales antes de mostrar las pantallas cuando `APP_ENV=production`; `/health` permanece público y los webhooks conservan su validación de firma.
+En Render, abre el servicio existente y agrega en **Environment** `APP_ENV=production`, `SESSION_SECRET_KEY` con una clave aleatoria, `DRY_RUN=true` y `SEED_DEMO=false`. Genera la clave en PowerShell con `python -c "import secrets; print(secrets.token_urlsafe(48))"` y guárdala solo en Render. Elimina las antiguas variables `ADMIN_USERNAME` y `ADMIN_PASSWORD` si todavía están configuradas; el acceso ahora se gestiona desde la página de inicio de sesión. Después abre **Manual Deploy** y despliega la última imagen. Al abrir la URL, selecciona **Crear cuenta** para registrar un correo y contraseña. Como el registro está abierto y SQLite no es persistente en el plan gratuito, úsalo únicamente con datos ficticios.
 
 Al finalizar, verifica `/health`, inicia sesión en la URL existente del servicio y confirma que aparece **Deja lista la agenda de mañana**. Conserva `DRY_RUN=true`. El plan gratuito de Render no ofrece disco persistente: usa esta instancia solo como demo y no guardes datos reales de pacientes. Antes de usar datos reales, configura almacenamiento persistente, respaldos y los controles operativos correspondientes.
 

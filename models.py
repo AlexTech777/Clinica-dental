@@ -5,6 +5,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
 
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(254), nullable=False, unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, nullable=False)
+
+
 class Patient(Base):
     __tablename__ = "patients"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import secrets
 from contextlib import asynccontextmanager
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
@@ -9,17 +10,18 @@ from urllib.parse import quote
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response, PlainTextResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-import secrets
+from starlette.middleware.sessions import SessionMiddleware
 
 from database import Base, SessionLocal, engine, get_db
-from models import AppSetting, Appointment, MessageLog, Patient, WaitlistEntry
+from models import AppSetting, Appointment, MessageLog, Patient, User, WaitlistEntry
 from services.calendar_service import GoogleCalendarService
+from services.auth import hash_password, verify_password
 from services.jobs import offer_waitlist, run_automation_jobs, safe_send, within_message_window
 from services.parsers import parse_calendar_event, parse_whatsapp_reply
 from services.time import now_local
@@ -34,6 +36,11 @@ templates.env.filters["cldate"] = lambda value: value.strftime("%d/%m/%Y") if va
 templates.env.filters["cltime"] = lambda value: value.strftime("%H:%M") if value else "—"
 scheduler = BackgroundScheduler(timezone=os.getenv("TIMEZONE", "America/Santiago"))
 calendar_status = {"last_sync": None, "error": None}
+session_secret = os.getenv("SESSION_SECRET_KEY")
+if not session_secret:
+    session_secret = secrets.token_urlsafe(48)
+    if os.getenv("APP_ENV", "").lower() == "production":
+        log.warning("SESSION_SECRET_KEY no está configurada; las sesiones finalizarán al reiniciar.")
 
 
 def calendar_service():
@@ -94,11 +101,35 @@ def appointment_label(status):
 def page(request, template, db, active, **extra):
     return templates.TemplateResponse(request=request, name=template, context={
         "active": active, "today": now_local().date(), "calendar": calendar_service(),
+        "csrf_token": csrf_token(request),
         "twilio": whatsapp_service(db), "dry_run": str(get_setting(db, "dry_run", os.getenv("DRY_RUN", "true"))).lower() in {"1", "true", "yes", "on"},
         "message_start": get_setting(db, "message_start", os.getenv("MESSAGE_START_HOUR", "9")),
         "message_end": get_setting(db, "message_end", os.getenv("MESSAGE_END_HOUR", "20")),
         "calendar_status": calendar_status, **extra,
     })
+
+
+def csrf_token(request):
+    token = request.session.get("csrf_token")
+    if not token:
+        token = secrets.token_urlsafe(32)
+        request.session["csrf_token"] = token
+    return token
+
+
+def auth_page(request, template, error=None, message=None, status_code=200, mode="login"):
+    return templates.TemplateResponse(
+        request=request,
+        name=template,
+        context={"csrf_token": csrf_token(request), "error": error, "message": message, "mode": mode},
+        status_code=status_code,
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def valid_csrf(request, token):
+    expected = request.session.get("csrf_token", "")
+    return bool(expected and token and secrets.compare_digest(expected, token))
 
 
 def seed_demo(db):
@@ -206,31 +237,114 @@ app.mount("/static", StaticFiles(directory=str(ROOT / "static")), name="static")
 
 
 @app.middleware("http")
-async def optional_basic_auth(request: Request, call_next):
-    username, password = os.getenv("ADMIN_USERNAME"), os.getenv("ADMIN_PASSWORD")
-    production = os.getenv("APP_ENV", "").lower() == "production"
-    if request.url.path == "/health" or request.url.path.startswith("/webhooks/"):
+async def require_login(request: Request, call_next):
+    path = request.url.path
+    if path in {"/", "/health", "/auth/login", "/auth/register"} or path.startswith(("/static/", "/webhooks/")):
         return await call_next(request)
-    if production and not (username and password):
-        return PlainTextResponse("La aplicación no está configurada: faltan credenciales de administración.", status_code=503)
-    if username and password:
-        import base64
-        header=request.headers.get("authorization", "")
-        valid=False
-        if header.startswith("Basic "):
-            try:
-                raw=base64.b64decode(header[6:],validate=True).decode("utf-8")
-                user,sep,secret=raw.partition(":")
-                valid=bool(sep and secrets.compare_digest(user,username) and secrets.compare_digest(secret,password))
-            except (ValueError,UnicodeDecodeError):
-                valid=False
-        if not valid:
-            return PlainTextResponse("Autenticación requerida.",status_code=401,headers={"WWW-Authenticate":"Basic realm=SonrisaClara"})
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse("/auth/login", status_code=303)
+    db = SessionLocal()
+    try:
+        user = db.get(User, user_id)
+        if not user:
+            request.session.clear()
+            return RedirectResponse("/auth/login", status_code=303)
+        request.state.user_email = user.email
+    finally:
+        db.close()
     return await call_next(request)
 
 
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=session_secret,
+    session_cookie="sonrisa_session",
+    max_age=12 * 60 * 60,
+    same_site="lax",
+    https_only=os.getenv("APP_ENV", "").lower() == "production",
+)
+
+
+@app.get("/auth/login", response_class=HTMLResponse)
+def login_page(request: Request):
+    if request.session.get("user_id"):
+        return RedirectResponse("/resumen", status_code=303)
+    message = "Sesión cerrada correctamente." if request.query_params.get("closed") == "1" else None
+    return auth_page(request, "auth.html", message=message, mode="login")
+
+
+@app.post("/auth/login", response_class=HTMLResponse)
+def login(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    token: str = Form(..., alias="csrf_token"),
+    db: Session = Depends(get_db),
+):
+    if not valid_csrf(request, token):
+        return auth_page(request, "auth.html", error="La página venció. Intenta iniciar sesión de nuevo.", status_code=400, mode="login")
+    normalized_email = email.strip().lower()
+    user = db.scalar(select(User).where(User.email == normalized_email))
+    if not user or len(password) > 128 or not verify_password(password, user.password_hash):
+        return auth_page(request, "auth.html", error="El correo o la contraseña no son correctos.", status_code=401, mode="login")
+    request.session.clear()
+    request.session["user_id"] = user.id
+    return RedirectResponse("/resumen", status_code=303)
+
+
+@app.get("/auth/register", response_class=HTMLResponse)
+def register_page(request: Request):
+    if request.session.get("user_id"):
+        return RedirectResponse("/resumen", status_code=303)
+    return auth_page(request, "auth.html", mode="register")
+
+
+@app.post("/auth/register", response_class=HTMLResponse)
+def register(
+    request: Request,
+    email: str = Form(...),
+    password: str = Form(...),
+    password_confirmation: str = Form(...),
+    token: str = Form(..., alias="csrf_token"),
+    db: Session = Depends(get_db),
+):
+    if not valid_csrf(request, token):
+        return auth_page(request, "auth.html", error="La página venció. Intenta crear tu cuenta de nuevo.", status_code=400, mode="register")
+    normalized_email = email.strip().lower()
+    if len(normalized_email) > 254 or not re.fullmatch(r"[^@\s]{1,64}@[^@\s]{1,255}\.[^@\s]{2,}", normalized_email):
+        return auth_page(request, "auth.html", error="Ingresa un correo electrónico válido.", status_code=400, mode="register")
+    if len(password) < 12:
+        return auth_page(request, "auth.html", error="La contraseña debe tener al menos 12 caracteres.", status_code=400, mode="register")
+    if len(password) > 128:
+        return auth_page(request, "auth.html", error="La contraseña no puede superar 128 caracteres.", status_code=400, mode="register")
+    if password != password_confirmation:
+        return auth_page(request, "auth.html", error="Las contraseñas no coinciden.", status_code=400, mode="register")
+    if db.scalar(select(User.id).where(User.email == normalized_email)):
+        return auth_page(request, "auth.html", error="Ya existe una cuenta con ese correo.", status_code=409, mode="register")
+    user = User(email=normalized_email, password_hash=hash_password(password))
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return auth_page(request, "auth.html", error="Ya existe una cuenta con ese correo.", status_code=409, mode="register")
+    request.session.clear()
+    request.session["user_id"] = user.id
+    return RedirectResponse("/resumen", status_code=303)
+
+
+@app.post("/auth/logout")
+def logout(request: Request, token: str = Form(..., alias="csrf_token")):
+    if not valid_csrf(request, token):
+        raise HTTPException(status_code=400, detail="Token de seguridad inválido.")
+    request.session.clear()
+    return RedirectResponse("/auth/login?closed=1", status_code=303)
+
+
 @app.get("/", include_in_schema=False)
-def root(): return RedirectResponse("/resumen")
+def root(request: Request):
+    return RedirectResponse("/resumen" if request.session.get("user_id") else "/auth/login", status_code=303)
 
 
 @app.get("/resumen", response_class=HTMLResponse)

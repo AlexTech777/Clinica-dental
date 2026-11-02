@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime, timedelta
 
 os.environ.setdefault("SEED_DEMO", "false")
@@ -12,7 +13,7 @@ from sqlalchemy.pool import StaticPool
 import database
 import main
 from database import Base
-from models import Appointment, Patient, WaitlistEntry
+from models import Appointment, Patient, User, WaitlistEntry
 from services.parsers import parse_calendar_event, parse_whatsapp_reply
 from services.rules import followup_stage, is_waitlist_compatible
 
@@ -67,6 +68,25 @@ def test_booking_validation_persistence_and_separate_views(monkeypatch):
     main.app.dependency_overrides[database.get_db]=override_db
     monkeypatch.setattr(main, "calendar_service", lambda: type("Calendar", (), {"connected":False})())
     with TestClient(main.app) as client:
+        assert client.get("/resumen", follow_redirects=False).status_code == 303
+        assert client.get("/health").status_code == 200
+        registration_page = client.get("/auth/register")
+        assert registration_page.status_code == 200 and "Crear cuenta" in registration_page.text
+        csrf = re.search(r'name="csrf_token" value="([^"]+)"', registration_page.text).group(1)
+        registration = client.post("/auth/register", data={
+            "email": "Recepcion@Ejemplo.com",
+            "password": "una-clave-segura-123",
+            "password_confirmation": "una-clave-segura-123",
+            "csrf_token": csrf,
+        }, follow_redirects=False)
+        assert registration.status_code == 303
+        account_db = TestSession()
+        account = account_db.query(User).one()
+        assert account.email == "recepcion@ejemplo.com"
+        assert account.password_hash != "una-clave-segura-123"
+        account_db.close()
+        assert client.get("/resumen").status_code == 200
+
         agenda=client.get("/agenda")
         assert agenda.status_code==200 and "Agendar paciente" in agenda.text
         invalid=client.post("/appointments/create",data={"name":"Laura","phone":"123","treatment":"Endodoncia","day":(datetime.now()+timedelta(days=2)).strftime("%Y-%m-%d"),"hour":"12:00","duration":"45"},follow_redirects=True)
@@ -103,15 +123,40 @@ def test_booking_validation_persistence_and_separate_views(monkeypatch):
         assert dashboard.text.index("Paciente sin contacto") < dashboard.text.index("Paciente Demo")
         assert f"from_date={tomorrow:%Y-%m-%d}" in dashboard.text
 
-        monkeypatch.setenv("APP_ENV", "production")
-        monkeypatch.delenv("ADMIN_USERNAME", raising=False)
-        monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
-        assert client.get("/resumen").status_code == 503
-        assert client.get("/health").status_code == 200
-        monkeypatch.setenv("ADMIN_USERNAME", "admin")
-        monkeypatch.setenv("ADMIN_PASSWORD", "long-local-test-password")
-        assert client.get("/resumen").status_code == 401
-        assert client.get("/resumen", auth=("admin", "long-local-test-password")).status_code == 200
+        logout_token = re.search(r'name="csrf_token" value="([^"]+)"', dashboard.text).group(1)
+        assert client.post("/auth/logout", data={"csrf_token": logout_token}, follow_redirects=False).status_code == 303
+        assert client.get("/resumen", follow_redirects=False).status_code == 303
+        registration_page = client.get("/auth/register")
+        registration_csrf = re.search(r'name="csrf_token" value="([^"]+)"', registration_page.text).group(1)
+        duplicate_account = client.post("/auth/register", data={
+            "email": "recepcion@ejemplo.com",
+            "password": "una-clave-segura-123",
+            "password_confirmation": "una-clave-segura-123",
+            "csrf_token": registration_csrf,
+        }, follow_redirects=False)
+        assert duplicate_account.status_code == 409
+        login_page = client.get("/auth/login")
+        assert login_page.status_code == 200 and "Iniciar sesión" in login_page.text
+        login_csrf = re.search(r'name="csrf_token" value="([^"]+)"', login_page.text).group(1)
+        invalid_csrf = client.post("/auth/login", data={
+            "email": "recepcion@ejemplo.com",
+            "password": "una-clave-segura-123",
+            "csrf_token": "invalid",
+        })
+        assert invalid_csrf.status_code == 400
+        invalid_login = client.post("/auth/login", data={
+            "email": "recepcion@ejemplo.com",
+            "password": "clave-incorrecta",
+            "csrf_token": login_csrf,
+        })
+        assert invalid_login.status_code == 401
+        successful_login = client.post("/auth/login", data={
+            "email": "recepcion@ejemplo.com",
+            "password": "una-clave-segura-123",
+            "csrf_token": login_csrf,
+        }, follow_redirects=False)
+        assert successful_login.status_code == 303
+        assert client.get("/resumen").status_code == 200
     db=TestSession()
     appt=db.query(Appointment).filter(Appointment.session_number == 2).one()
     patient=db.query(Patient).filter(Patient.phone == "+56912345677").one()

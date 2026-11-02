@@ -570,6 +570,34 @@
   color: var(--muted);
 }
 
+.logout-form {
+  margin: 4px 0;
+}
+
+.logout-button {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.logout-button:focus-visible {
+  outline: 2px solid #35d7e8;
+  outline-offset: 2px;
+}
+
+.profile > span:nth-child(2) {
+  min-width: 0;
+}
+
+.profile > span:nth-child(2) b,
+.profile > span:nth-child(2) small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 700px) {
   .dashboard-hero {
     min-height: auto;
