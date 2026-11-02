@@ -93,7 +93,7 @@ def appointment_label(status):
 
 def page(request, template, db, active, **extra):
     return templates.TemplateResponse(request=request, name=template, context={
-        "active": active, "today": date.today(), "calendar": calendar_service(),
+        "active": active, "today": now_local().date(), "calendar": calendar_service(),
         "twilio": whatsapp_service(db), "dry_run": str(get_setting(db, "dry_run", os.getenv("DRY_RUN", "true"))).lower() in {"1", "true", "yes", "on"},
         "message_start": get_setting(db, "message_start", os.getenv("MESSAGE_START_HOUR", "9")),
         "message_end": get_setting(db, "message_end", os.getenv("MESSAGE_END_HOUR", "20")),
@@ -208,7 +208,12 @@ app.mount("/static", StaticFiles(directory=str(ROOT / "static")), name="static")
 @app.middleware("http")
 async def optional_basic_auth(request: Request, call_next):
     username, password = os.getenv("ADMIN_USERNAME"), os.getenv("ADMIN_PASSWORD")
-    if username and password and not request.url.path.startswith("/webhooks/"):
+    production = os.getenv("APP_ENV", "").lower() == "production"
+    if request.url.path == "/health" or request.url.path.startswith("/webhooks/"):
+        return await call_next(request)
+    if production and not (username and password):
+        return PlainTextResponse("La aplicación no está configurada: faltan credenciales de administración.", status_code=503)
+    if username and password:
         import base64
         header=request.headers.get("authorization", "")
         valid=False
@@ -230,7 +235,7 @@ def root(): return RedirectResponse("/resumen")
 
 @app.get("/resumen", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)):
-    today_start = datetime.combine(date.today(), time.min); tomorrow = today_start+timedelta(days=1); next_day = tomorrow+timedelta(days=1)
+    today_start = datetime.combine(now_local().date(), time.min); tomorrow = today_start+timedelta(days=1); next_day = tomorrow+timedelta(days=1)
     today_appointments = list(db.scalars(select(Appointment).where(Appointment.starts_at >= today_start, Appointment.starts_at < tomorrow).order_by(Appointment.starts_at)))
     tomorrow_appointments = list(db.scalars(select(Appointment).where(Appointment.starts_at >= tomorrow, Appointment.starts_at < next_day).order_by(Appointment.starts_at)))
     upcoming = list(db.scalars(select(Appointment).where(Appointment.starts_at >= today_start).order_by(Appointment.starts_at)))
@@ -247,14 +252,37 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     recovered = db.scalar(select(func.count(WaitlistEntry.id)).where(WaitlistEntry.status == "booked")) or 0
     rescheduled = db.scalar(select(func.count(Appointment.id)).where(Appointment.status == "reschedule")) or 0
     alerts = [a for a in upcoming if a.attention_required or a.status in {"no_response", "reschedule", "released"}]
+    review_reasons = {
+        "contact": "Revisar contacto",
+        "calendar": "Pendiente en Calendar",
+        "confirmation": "Confirmar cita",
+    }
+    tomorrow_review = []
+    for appointment in tomorrow_appointments:
+        reasons = []
+        if appointment.attention_required or not appointment.patient.phone:
+            reasons.append({"key": "contact", "label": review_reasons["contact"]})
+        if appointment.sync_state in {"pending", "error"}:
+            reasons.append({"key": "calendar", "label": review_reasons["calendar"]})
+        if appointment.status in {"pending", "no_response", "reschedule"}:
+            reasons.append({"key": "confirmation", "label": review_reasons["confirmation"]})
+        if reasons:
+            priority = 0 if reasons[0]["key"] == "contact" else 1 if reasons[0]["key"] == "calendar" else 2
+            tomorrow_review.append({"appointment": appointment, "reasons": reasons, "priority": priority})
+    tomorrow_review.sort(key=lambda item: (item["priority"], item["appointment"].starts_at))
+    review_counts = {
+        key: sum(any(reason["key"] == key for reason in item["reasons"]) for item in tomorrow_review)
+        for key in review_reasons
+    }
     return page(request, "dashboard.html", db, "resumen", today_appointments=today_appointments, tomorrow_appointments=tomorrow_appointments,
         confirmed_pct=confirmed_pct, misses_pct=misses_pct, risk_patients=risk_patients, released=released,
-        abandoned=abandoned, completed=completed, recovered=recovered, rescheduled=rescheduled, alerts=alerts, appointment_label=appointment_label)
+        abandoned=abandoned, completed=completed, recovered=recovered, rescheduled=rescheduled, alerts=alerts, appointment_label=appointment_label,
+        tomorrow_date=tomorrow.date(), tomorrow_review=tomorrow_review, review_counts=review_counts)
 
 
 @app.get("/agenda", response_class=HTMLResponse)
 def agenda(request: Request, db: Session = Depends(get_db), from_date: str | None = None, to_date: str | None = None, status: str | None = None):
-    start_date = date.fromisoformat(from_date) if from_date else date.today()
+    start_date = date.fromisoformat(from_date) if from_date else now_local().date()
     end_date = date.fromisoformat(to_date) if to_date else start_date+timedelta(days=7)
     query = select(Appointment).where(Appointment.starts_at >= datetime.combine(start_date,time.min), Appointment.starts_at < datetime.combine(end_date+timedelta(days=1),time.min)).order_by(Appointment.starts_at)
     if status:

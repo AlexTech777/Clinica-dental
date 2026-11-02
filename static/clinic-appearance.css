@@ -95,3 +95,177 @@
 .swatch-blue i:nth-child(3) {
   background: #087c78;
 }
+
+.tomorrow-review {
+  margin-bottom: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: linear-gradient(110deg, var(--accent-soft), var(--surface) 44%);
+  box-shadow: var(--shadow);
+}
+
+.tomorrow-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.tomorrow-heading .eyebrow {
+  margin-bottom: 4px;
+}
+
+.tomorrow-heading h2 {
+  margin: 0;
+  color: var(--ink-strong);
+  font: 700 16px/1.3 Manrope, sans-serif;
+}
+
+.tomorrow-heading p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.tomorrow-heading .inline-link {
+  padding-top: 5px;
+}
+
+.tomorrow-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin: 16px 0 3px;
+}
+
+.tomorrow-stats > div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.tomorrow-stats strong {
+  color: var(--ink-strong);
+  font: 700 17px/1 Manrope, sans-serif;
+}
+
+.tomorrow-stats span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.tomorrow-list {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tomorrow-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+}
+
+.tomorrow-patient {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.tomorrow-patient time {
+  width: 43px;
+  flex: none;
+  color: var(--ink-strong);
+  font: 700 12px Manrope, sans-serif;
+}
+
+.tomorrow-patient div {
+  display: grid;
+  min-width: 0;
+}
+
+.tomorrow-patient b {
+  overflow: hidden;
+  color: var(--ink-strong);
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
+
+.tomorrow-patient span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.tomorrow-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.review-tag {
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.review-contact {
+  color: var(--rose);
+  background: var(--rose-soft);
+}
+
+.review-calendar,
+.review-confirmation {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.tomorrow-clear {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .tomorrow-review {
+    padding: 17px 14px;
+  }
+
+  .tomorrow-heading {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .tomorrow-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tomorrow-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tomorrow-reasons {
+    justify-content: flex-start;
+    padding-left: 55px;
+  }
+}

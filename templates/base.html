@@ -27,7 +27,7 @@
     <div class="content">
       {% if request.query_params.get('flash') %}<div class="flash {{ request.query_params.get('kind','success') }}" role="status"><span>{{ request.query_params.get('flash') }}</span><button type="button" aria-label="Cerrar mensaje" class="flash-close">×</button></div>{% endif %}
       {% block content %}{% endblock %}
-      <footer class="footer"><span>Sonrisa Clara <span class="dot-sep">·</span> Panel administrativo</span><span>Los datos se guardan localmente en esta instalación.</span></footer>
+      <footer class="footer"><span>Sonrisa Clara <span class="dot-sep">·</span> Panel administrativo</span><span>Los datos se guardan en esta instalación.</span></footer>
     </div>
   </main>
   <script src="/static/app.js" defer></script>

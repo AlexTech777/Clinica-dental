@@ -79,8 +79,42 @@ def test_booking_validation_persistence_and_separate_views(monkeypatch):
         assert "Paciente Demo" in patients.text and "Citas y próximos días" not in patients.text
         wait=client.get("/lista-espera")
         assert wait.status_code==200 and "Personas en espera" in wait.text and "Paciente Demo" not in wait.text
+        empty_dashboard = client.get("/resumen")
+        assert "No hay citas programadas para mañana." in empty_dashboard.text
+        review_patient = Patient(name="Paciente sin contacto", phone=None, treatment="Control")
+        db = TestSession()
+        confirmed_patient = db.query(Patient).filter(Patient.phone == "+56912345677").one()
+        early_tomorrow = datetime.combine(main.now_local().date() + timedelta(days=1), datetime.min.time()).replace(hour=8)
+        db.add(Appointment(patient_id=confirmed_patient.id, starts_at=early_tomorrow, duration_minutes=30, treatment="Endodoncia",
+            status="pending", sync_state="local"))
+        db.add(review_patient)
+        db.flush()
+        tomorrow = datetime.combine(main.now_local().date() + timedelta(days=1), datetime.min.time()).replace(hour=10)
+        db.add(Appointment(patient_id=review_patient.id, starts_at=tomorrow, duration_minutes=30, treatment="Control",
+            status="pending", sync_state="pending", attention_required=True))
+        db.commit()
+        db.close()
+        dashboard = client.get("/resumen")
+        assert "Deja lista la agenda de mañana" in dashboard.text
+        assert "Paciente sin contacto" in dashboard.text
+        assert "Revisar contacto" in dashboard.text
+        assert "Pendiente en Calendar" in dashboard.text
+        assert "Confirmar cita" in dashboard.text
+        assert dashboard.text.index("Paciente sin contacto") < dashboard.text.index("Paciente Demo")
+        assert f"from_date={tomorrow:%Y-%m-%d}" in dashboard.text
+
+        monkeypatch.setenv("APP_ENV", "production")
+        monkeypatch.delenv("ADMIN_USERNAME", raising=False)
+        monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+        assert client.get("/resumen").status_code == 503
+        assert client.get("/health").status_code == 200
+        monkeypatch.setenv("ADMIN_USERNAME", "admin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "long-local-test-password")
+        assert client.get("/resumen").status_code == 401
+        assert client.get("/resumen", auth=("admin", "long-local-test-password")).status_code == 200
     db=TestSession()
-    appt=db.query(Appointment).one(); patient=db.query(Patient).one()
+    appt=db.query(Appointment).filter(Appointment.session_number == 2).one()
+    patient=db.query(Patient).filter(Patient.phone == "+56912345677").one()
     assert appt.sync_state=="pending" and appt.session_number==2 and patient.phone=="+56912345677"
     assert not hasattr(patient,"diagnosis") and not hasattr(patient,"clinical_notes")
     db.close(); main.app.dependency_overrides.clear(); Base.metadata.drop_all(test_engine); test_engine.dispose()

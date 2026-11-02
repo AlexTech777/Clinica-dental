@@ -7,6 +7,7 @@ Panel administrativo para una consulta dental pequeña. Google Calendar continú
 - Python 3.11+, FastAPI, Jinja2, SQLAlchemy/SQLite y APScheduler.
 - Pantallas separadas: Resumen, Agenda, Pacientes, Lista de espera y Configuración.
 - El feature principal está descrito en [`specs/agendar-paciente.md`](specs/agendar-paciente.md); las instrucciones persistentes están en [`AGENTS.md`](AGENTS.md).
+- El perfil de usuario y la nueva revisión de jornada están descritos en [`specs/icp-user-persona.md`](specs/icp-user-persona.md) y [`specs/preparar-agenda-manana.md`](specs/preparar-agenda-manana.md).
 - El adaptador `services/whatsapp_service.py` aísla Twilio para poder sustituirlo por Meta Cloud API.
 - El adaptador `services/calendar_service.py` lee, crea, actualiza y cancela eventos de Google Calendar. Los IDs de evento son estables para evitar duplicados.
 - La interfaz usa Jinja2 y CSS/JavaScript simple, sin framework frontend.
@@ -36,6 +37,8 @@ Editar cambia hora/duración y actualiza Google Calendar si está conectado. Las
 En **Pacientes**, usa Contactar o Agendar y cambia manualmente el seguimiento a completado, pausado, abandonado u otro estado. Se marca riesgo cuando faltan 14 días para la próxima sesión y se envían mensajes de seguimiento programados a los 3, 7 y 14 días cuando no hay una próxima cita.
 
 En **Lista de espera**, registra nombre, teléfono, tratamiento general y preferencia de días. La cola se ordena por antigüedad; se comprueba compatibilidad por tratamiento y día preferido.
+
+En **Resumen**, la sección **Deja lista la agenda de mañana** reúne las citas que requieren confirmación, revisión de contacto o sincronización. El listado prioriza los datos de contacto faltantes y enlaza con la Agenda ya filtrada para ese día; no envía mensajes ni modifica citas.
 
 ## Google Calendar
 
@@ -84,6 +87,17 @@ Cubren el parser de Calendar y de respuestas de WhatsApp, reglas de seguimiento 
 ## Configuración de publicación
 
 Antes de alojar el panel para un consultorio real, configura HTTPS, autenticación, respaldos, una cuenta de servicio con acceso limitado al calendario correcto y las plantillas aprobadas de WhatsApp. Conserva `DRY_RUN=true` hasta verificar ambos conectores.
+
+### Publicación en Render
+
+El repositorio incluye [`render.yaml`](render.yaml) para desplegar como servicio Docker en Render, con disco persistente para SQLite, datos de demostración desactivados y WhatsApp en `DRY_RUN`. El servicio requiere un plan Render que admita discos persistentes. Para publicarlo:
+
+1. Conecta este repositorio en Render y crea una instancia desde el Blueprint `render.yaml`.
+2. Define `ADMIN_USERNAME` y `ADMIN_PASSWORD` como variables secretas en el asistente de Render. Usa una contraseña larga y única; no la guardes en Git.
+3. Espera a que termine el despliegue. Render asignará el dominio HTTPS del servicio; comprueba `/health` y después inicia sesión en la página principal.
+4. Conserva `DRY_RUN=true` y no agregues datos reales hasta haber verificado autenticación, persistencia del disco y respaldos.
+
+En `APP_ENV=production`, las pantallas no quedan disponibles si faltan las credenciales de administración; `/health` permanece público para la comprobación del proveedor y los webhooks conservan su validación de firma. La URL pública solo existe después de completar la conexión y el despliegue en una cuenta Render. Esta configuración por sí sola no crea una instancia ni permite afirmar que ya hay una URL funcionando.
 
 Iniciar - Aplicación local
 
