@@ -577,9 +577,18 @@
 .logout-button {
   width: 100%;
   border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--nav-text);
   cursor: pointer;
   font: inherit;
+  appearance: none;
   text-align: left;
+}
+
+.logout-button:hover {
+  background: color-mix(in srgb, #fff 10%, transparent);
+  color: #fff;
 }
 
 .logout-button:focus-visible {

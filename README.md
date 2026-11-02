@@ -98,9 +98,9 @@ El servicio Render existente usa una imagen de Docker Hub con el formato `tu-usu
 Para construir y publicar otra versión desde la raíz del repositorio en Windows PowerShell, usa una etiqueta nueva y luego actualiza `latest`:
 
 ```powershell
-docker build -t tu-usuario/dental-app:2026-11-02-login-cuenta .
-docker push tu-usuario/dental-app:2026-11-02-login-cuenta
-docker tag tu-usuario/dental-app:2026-11-02-login-cuenta tu-usuario/dental-app:latest
+docker build -t tu-usuario/dental-app:2026-11-02-boton-sesion .
+docker push tu-usuario/dental-app:2026-11-02-boton-sesion
+docker tag tu-usuario/dental-app:2026-11-02-boton-sesion tu-usuario/dental-app:latest
 docker push tu-usuario/dental-app:latest
 ```
 
