@@ -1,119 +1,409 @@
-# Sonrisa Clara · Panel de consultorio dental
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
+![Docker](https://img.shields.io/badge/docker-ready-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-MVP-orange)
 
-Panel administrativo para una consulta dental pequeña. Google Calendar continúa como agenda principal; este sistema añade un resumen, directorio mínimo de pacientes, cola de espera y seguimiento. No es un expediente clínico ni guarda diagnósticos.
+# 🦷 Sonrisa Clara
+
+Panel administrativo para pequeños consultorios dentales.
+
+Google Calendar continúa siendo la agenda principal y Sonrisa Clara añade gestión operativa, seguimiento de pacientes, lista de espera, recordatorios y preparación de agenda.
+
+> ⚠️ Estado actual: DEMO / MVP
+>
+> No utilizar con datos reales de pacientes sin configurar previamente autenticación, HTTPS, almacenamiento persistente, copias de seguridad y controles de seguridad adecuados.
+
+---
+
+## Características
+
+- 📅 Integración con Google Calendar
+- 👥 Gestión básica de pacientes
+- ⏳ Lista de espera
+- 💬 Recordatorios mediante WhatsApp
+- 📊 Dashboard y resumen diario
+- 🔔 Seguimiento de pacientes
+- ✅ Confirmación de citas
+- 🔄 Sincronización automática de eventos
+
+---
+
+## Capturas de pantalla
+
+### Dashboard
+
+![Dashboard](docs/images/dashboard.png)
+
+### Agenda
+
+![Agenda](docs/images/agenda.png)
+
+### Pacientes
+
+![Pacientes](docs/images/pacientes.png)
+
+---
+
+## Tecnologías
+
+- Python 3.11+
+- FastAPI
+- Jinja2
+- SQLAlchemy
+- SQLite
+- APScheduler
+- Docker
+- Google Calendar API
+- Twilio WhatsApp
+
+---
 
 ## Arquitectura
 
-- Python 3.11+, FastAPI, Jinja2, SQLAlchemy/SQLite y APScheduler.
-- Pantallas separadas: Resumen, Agenda, Pacientes, Lista de espera y Configuración.
-- El feature principal está descrito en [`specs/agendar-paciente.md`](specs/agendar-paciente.md); las instrucciones persistentes están en [`AGENTS.md`](AGENTS.md).
-- El perfil de usuario y la nueva revisión de jornada están descritos en [`specs/icp-user-persona.md`](specs/icp-user-persona.md) y [`specs/preparar-agenda-manana.md`](specs/preparar-agenda-manana.md).
-- El adaptador `services/whatsapp_service.py` aísla Twilio para poder sustituirlo por Meta Cloud API.
-- El adaptador `services/calendar_service.py` lee, crea, actualiza y cancela eventos de Google Calendar. Los IDs de evento son estables para evitar duplicados.
-- La interfaz usa Jinja2 y CSS/JavaScript simple, sin framework frontend.
+```text
+┌─────────────────┐
+│ Navegador       │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ FastAPI         │
+└────────┬────────┘
+         │
+ ┌───────┼─────────┐
+ ▼       ▼         ▼
+SQLite Calendar  WhatsApp
+        API      (Twilio)
+```
 
-## Inicio en aproximadamente dos minutos
+---
 
-1. Instala Docker Desktop y abre una terminal en esta carpeta.
-2. Copia `.env.example` a `.env` (en Windows PowerShell: `Copy-Item .env.example .env`). El modo de demostración y `DRY_RUN` quedan habilitados por defecto.
-3. Inicia el panel con una sola orden:
+## Estructura del Proyecto
 
-   ```bash
-   docker compose up --build
-   ```
+```text
+project/
+│
+├── main.py
+├── services/
+│   ├── calendar_service.py
+│   └── whatsapp_service.py
+│
+├── templates/
+├── static/
+├── database/
+├── tests/
+├── specs/
+│
+├── AGENTS.md
+└── README.md
+```
 
-4. Abre [http://localhost:8000](http://localhost:8000). El panel carga citas y pacientes de demostración; no se envían mensajes reales.
+---
 
-Para correr sin Docker: crea un entorno virtual (`python -m venv .venv`), actívalo, instala `pip install -r requirements.txt` y ejecuta `python main.py`. El panel queda en `http://127.0.0.1:8000`.
+## Documentación Relacionada
 
-Los datos SQLite de Docker viven en un volumen persistente llamado `dental-data`. Para probar otra vez desde cero, detén el servicio y elimina ese volumen **solo si deseas borrar todos los datos de demostración y operación**.
+| Documento | Descripción |
+|------------|------------|
+| `AGENTS.md` | Instrucciones permanentes para agentes IA |
+| `specs/agendar-paciente.md` | Flujo de agendamiento |
+| `specs/icp-user-persona.md` | Perfil de usuario |
+| `specs/preparar-agenda-manana.md` | Revisión diaria de agenda |
 
-## Usar la Agenda y agendar
+---
 
-Entra en **Agenda**, usa filtros por fecha/estado y selecciona **Agendar paciente**. Nombre, teléfono, tratamiento general, fecha, hora y duración son obligatorios; sesión actual/total es opcional, pero se deben completar ambos. Si la conexión de Calendar no está configurada, el panel guarda la cita en SQLite y muestra “Pendiente de sincronización”. Si Calendar está conectado, crea el evento y conserva su ID. No agendes dos citas que se crucen en el horario.
+# 🚀 Inicio Rápido
 
-Editar cambia hora/duración y actualiza Google Calendar si está conectado. Las acciones “Asistió” y “No asistió” actualizan el estado. La inasistencia activa un mensaje de reprogramación. Al cancelar o reprogramar se libera el espacio y se contacta a la primera persona compatible en espera. La asistente confirma la cita en Calendar después de recibir un “SÍ”.
+## Opción 1: Docker (Recomendado)
 
-En **Pacientes**, usa Contactar o Agendar y cambia manualmente el seguimiento a completado, pausado, abandonado u otro estado. Se marca riesgo cuando faltan 14 días para la próxima sesión y se envían mensajes de seguimiento programados a los 3, 7 y 14 días cuando no hay una próxima cita.
+### Clonar proyecto
 
-En **Lista de espera**, registra nombre, teléfono, tratamiento general y preferencia de días. La cola se ordena por antigüedad; se comprueba compatibilidad por tratamiento y día preferido.
+```bash
+git clone <repositorio>
+cd sonrisa-clara
+```
 
-En **Resumen**, la sección **Deja lista la agenda de mañana** reúne las citas que requieren confirmación, revisión de contacto o sincronización. El listado prioriza los datos de contacto faltantes y enlaza con la Agenda ya filtrada para ese día; no envía mensajes ni modifica citas.
+### Crear archivo .env
 
-## Google Calendar
+```powershell
+Copy-Item .env.example .env
+```
 
-La implementación usa cuenta de servicio, adecuada para un calendario de equipo compartido. Para un calendario personal sin posibilidad de compartir o para cuentas fuera de Google Workspace, configura OAuth en lugar de exponer una llave de servicio.
+### Levantar aplicación
 
-1. En Google Cloud crea un proyecto y habilita Google Calendar API.
-2. Crea una cuenta de servicio, descarga su JSON de credenciales y guarda el archivo fuera del repositorio (está excluido de Git).
-3. Comparte el calendario que usa la consulta con el correo de la cuenta de servicio y permiso para hacer cambios en eventos. Copia el ID del calendario desde sus ajustes.
-4. En `.env`, define `GOOGLE_CALENDAR_ID` y `GOOGLE_SERVICE_ACCOUNT_FILE` con rutas legibles por el proceso.
-5. Pulsa **Sincronizar ahora** en Configuración o espera la sincronización automática cada 10 minutos.
+```bash
+docker compose up --build
+```
 
-Los títulos se leen como `Nombre Paciente - Tratamiento (X/Y)` y el teléfono como `Tel: +56912345678` en la descripción. Si el título no lleva sesión, es una cita simple. Si falta teléfono, aparece “Requiere atención” y no se envía recordatorio automático. Los eventos cancelados liberan el horario.
+### Abrir aplicación
 
-Si usas Docker, monta el JSON de forma de solo lectura en el contenedor y apunta `GOOGLE_SERVICE_ACCOUNT_FILE` a esa ruta. No agregues la llave al repositorio ni a una imagen publicada.
+```text
+http://localhost:8000
+```
 
-## Twilio WhatsApp Sandbox y producción
+La aplicación cargará datos de demostración y no enviará mensajes reales mientras `DRY_RUN=true`.
 
-1. Crea o usa una cuenta de Twilio y activa **Try WhatsApp / Sandbox**. Desde el teléfono de prueba, sigue las instrucciones de conexión del Sandbox.
-2. Copia `TWILIO_ACCOUNT_SID` y `TWILIO_AUTH_TOKEN` a `.env`; configura `TWILIO_WHATSAPP_FROM` con el remitente que indique el Sandbox.
-3. Para webhooks locales, publica el puerto del servidor con un túnel HTTPS de desarrollo y configura la URL `/webhooks/whatsapp` en “When a Message Comes In” del Sandbox. Define esa URL completa en `TWILIO_WEBHOOK_URL` para validar la firma.
-4. Prueba primero con `DRY_RUN=true`. Los mensajes salen en la consola. En Configuración también se puede activar/desactivar el modo.
-5. Para enviar de verdad, cambia `DRY_RUN=false`, define el horario permitido y configura `ASSISTANT_WHATSAPP` en formato internacional para los avisos a la asistente.
+---
 
-Los recordatorios están previstos 48 y 3 horas antes, solo entre las 09:00 y 20:00 por defecto. El webhook entiende `1`, “sí”, “si”, “ok”, “confirmo”, `2`, “no puedo”, “cancelar”, “reprogramar” y `STOP`. Los IDs entrantes y las claves de recordatorio se registran para evitar procesar dos veces el mismo evento. Los envíos de empresa en producción pueden necesitar plantillas aprobadas por WhatsApp; el Sandbox usa solo sus plantillas disponibles y la sesión de atención tiene una ventana limitada.
+## Opción 2: Entorno Virtual
 
-## Temas y preferencias
+Crear entorno:
 
-En **Configuración** elige Grafito y mandarina, Verde intenso o Azul eléctrico. El tema se aplica inmediatamente y se guarda en el navegador. El horario permitido y DRY_RUN se guardan en SQLite.
+```bash
+python -m venv .venv
+```
 
-## Seguridad y datos
+Activar:
 
-- El panel ofrece inicio de sesión y registro con correo y contraseña de al menos 12 caracteres. Las contraseñas se guardan con hash; las sesiones usan una cookie firmada. Cada cuenta tiene acceso al mismo espacio, pacientes, citas y lista de espera.
-- El registro está abierto: cualquier persona que encuentre la URL puede crear una cuenta e ingresar a los datos compartidos. Úsalo solo como demo con datos ficticios; no ingreses información real de pacientes mientras el registro sea público.
-- SQLite guarda las cuentas junto con los demás datos. En el disco efímero del Render gratuito, las cuentas y la información pueden perderse al reemplazar la instancia. Para conservarlas, configura almacenamiento persistente antes de usarlo.
-- Configura `SESSION_SECRET_KEY` en `.env` y en Render. Para generar una clave aleatoria en PowerShell: `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Guárdala como variable de entorno; no la publiques ni la agregues a Git. Publica el servicio detrás de HTTPS.
-- El webhook de Twilio rechaza solicitudes sin firma válida.
-- No se guarda el texto de mensajes, diagnóstico ni notas clínicas. SQLite sí contiene nombres, teléfonos, tratamiento general, citas y estados operativos. Protege el equipo/volumen con controles del sistema operativo y copias de seguridad seguras.
-- `STOP` evita todos los envíos futuros a ese teléfono, incluso si está en la lista de espera.
-- La aplicación no ofrece facturación ni atención clínica.
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
-## Tests
+Instalar dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+Ejecutar:
+
+```bash
+python main.py
+```
+
+Abrir:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+# Configuración
+
+## Variables de Entorno
+
+| Variable | Descripción |
+|-----------|-------------|
+| APP_ENV | Entorno de ejecución |
+| DRY_RUN | Simulación de mensajes |
+| GOOGLE_CALENDAR_ID | ID del calendario |
+| GOOGLE_SERVICE_ACCOUNT_FILE | JSON de credenciales |
+| SESSION_SECRET_KEY | Clave de sesiones |
+| TWILIO_ACCOUNT_SID | Cuenta Twilio |
+| TWILIO_AUTH_TOKEN | Token Twilio |
+| TWILIO_WHATSAPP_FROM | Número remitente |
+| ASSISTANT_WHATSAPP | Número de asistente |
+
+---
+
+# Funcionalidades
+
+## Agenda
+
+Permite:
+
+- Crear citas
+- Modificar citas
+- Cancelar citas
+- Confirmar asistencia
+- Actualizar Google Calendar
+
+Si Google Calendar no está configurado, la cita queda marcada como:
+
+```text
+Pendiente de sincronización
+```
+
+---
+
+## Pacientes
+
+Permite:
+
+- Registrar pacientes
+- Agendar nuevas citas
+- Gestionar estados de seguimiento
+- Detectar riesgos de abandono
+
+Estados disponibles:
+
+- Completado
+- Pausado
+- Abandonado
+- Seguimiento
+
+---
+
+## Lista de Espera
+
+Permite:
+
+- Registrar pacientes interesados
+- Gestionar prioridades
+- Cubrir cancelaciones automáticamente
+
+---
+
+## Resumen
+
+Incluye:
+
+- Citas pendientes de confirmar
+- Pacientes sin teléfono
+- Eventos pendientes de sincronización
+- Preparación de agenda del día siguiente
+
+---
+
+# Google Calendar
+
+La integración utiliza una cuenta de servicio.
+
+Pasos básicos:
+
+1. Crear proyecto en Google Cloud.
+2. Habilitar Google Calendar API.
+3. Crear cuenta de servicio.
+4. Compartir calendario.
+5. Configurar variables de entorno.
+
+Consultar la documentación oficial en:
+
+```text
+Google Cloud Console
+```
+
+---
+
+# WhatsApp
+
+Integración mediante Twilio.
+
+Funciones:
+
+- Confirmación de citas
+- Cancelaciones
+- Reprogramaciones
+- Seguimientos automáticos
+
+Modo seguro:
+
+```env
+DRY_RUN=true
+```
+
+En este modo los mensajes no se envían realmente.
+
+---
+
+# Seguridad
+
+## Estado actual
+
+⚠️ La aplicación está pensada actualmente como demostración.
+
+Limitaciones actuales:
+
+- Registro abierto
+- Espacio compartido
+- SQLite local
+- Sin aislamiento por clínica
+
+---
+
+## Recomendaciones para Producción
+
+- HTTPS obligatorio
+- Secretos en variables de entorno
+- Backups automáticos
+- Registro cerrado
+- Gestión de usuarios y permisos
+- Persistencia de almacenamiento
+- Monitorización
+
+---
+
+# Tests
+
+Ejecutar:
 
 ```bash
 python -m pytest -q
 ```
 
-Cubren el inicio de sesión, registro, cierre de sesión y acceso protegido, además del parser de Calendar y WhatsApp, las reglas de seguimiento, la validación y guardado de citas y la separación de listas por pantalla.
+Las pruebas cubren:
 
-## Configuración de publicación
+- Autenticación
+- Registro
+- Agenda
+- Integración Calendar
+- WhatsApp
+- Validaciones
+- Seguimiento
 
-Antes de alojar el panel para un consultorio real, configura HTTPS, autenticación, respaldos, una cuenta de servicio con acceso limitado al calendario correcto y las plantillas aprobadas de WhatsApp. Conserva `DRY_RUN=true` hasta verificar ambos conectores.
+---
 
-### Publicación en Render
+# Despliegue
 
-El servicio Render existente usa una imagen de Docker Hub con el formato `tu-usuario/dental-app:latest`. `tu-usuario` es un ejemplo: reemplázalo por tu espacio de nombres de Docker Hub al construir y publicar. Conserva en Render la ruta real de la imagen que ya tiene configurada. Render no despliega automáticamente nuevas imágenes del registro; después de publicarlas, se debe activar **Manual Deploy** en el servicio existente.
+## Docker
 
-Para construir y publicar otra versión desde la raíz del repositorio en Windows PowerShell, usa una etiqueta nueva y luego actualiza `latest`:
+Construcción:
 
-```powershell
-docker build -t tu-usuario/dental-app:2026-11-02-boton-sesion .
-docker push tu-usuario/dental-app:2026-11-02-boton-sesion
-docker tag tu-usuario/dental-app:2026-11-02-boton-sesion tu-usuario/dental-app:latest
-docker push tu-usuario/dental-app:latest
+```bash
+docker build -t usuario/dental-app:latest .
 ```
 
-En Render, abre el servicio existente y agrega en **Environment** `APP_ENV=production`, `SESSION_SECRET_KEY` con una clave aleatoria, `DRY_RUN=true` y `SEED_DEMO=false`. Genera la clave en PowerShell con `python -c "import secrets; print(secrets.token_urlsafe(48))"` y guárdala solo en Render. Elimina las antiguas variables `ADMIN_USERNAME` y `ADMIN_PASSWORD` si todavía están configuradas; el acceso ahora se gestiona desde la página de inicio de sesión. Después abre **Manual Deploy** y despliega la última imagen. Al abrir la URL, selecciona **Crear cuenta** para registrar un correo y contraseña. Como el registro está abierto y SQLite no es persistente en el plan gratuito, úsalo únicamente con datos ficticios.
+Publicación:
 
-Al finalizar, verifica `/health`, inicia sesión en la URL existente del servicio y confirma que aparece **Deja lista la agenda de mañana**. Conserva `DRY_RUN=true`. El plan gratuito de Render no ofrece disco persistente: usa esta instancia solo como demo y no guardes datos reales de pacientes. Antes de usar datos reales, configura almacenamiento persistente, respaldos y los controles operativos correspondientes.
+```bash
+docker push usuario/dental-app:latest
+```
 
-Iniciar - Aplicación local
+---
 
-.\.venv\Scripts\Activate.ps1
+## Render
 
-python main.py
+Variables mínimas:
 
-Con Docker:
+```env
+APP_ENV=production
+DRY_RUN=true
+SEED_DEMO=false
+SESSION_SECRET_KEY=<clave_segura>
+```
 
-docker compose up --build
+Antes de usar pacientes reales:
+
+- Configurar almacenamiento persistente
+- Habilitar HTTPS
+- Activar copias de seguridad
+- Validar integraciones
+
+---
+
+# Limitaciones
+
+Actualmente la aplicación:
+
+- No es un expediente clínico
+- No almacena diagnósticos
+- No almacena notas médicas
+- No gestiona facturación
+- No reemplaza sistemas clínicos certificados
+
+---
+
+# Licencia
+
+Definir licencia del proyecto según corresponda.
+
+---
+
+# Autor
+
+Sonrisa Clara - Sistema de gestión para consultorios dentales. - Alexsystems 
+
+Desarrollado por Alexander González.
+
+Proyecto personal de automatización y gestión para consultorios dentales utilizando Python, FastAPI, Docker, Google Calendar y WhatsApp.
