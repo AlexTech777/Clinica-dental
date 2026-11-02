@@ -90,14 +90,20 @@ Antes de alojar el panel para un consultorio real, configura HTTPS, autenticaci�
 
 ### Publicación en Render
 
-El repositorio incluye [`render.yaml`](render.yaml) para desplegar como servicio Docker en Render, con disco persistente para SQLite, datos de demostración desactivados y WhatsApp en `DRY_RUN`. El servicio requiere un plan Render que admita discos persistentes. Para publicarlo:
+El servicio existente `dental-app:latest` usa la imagen pública `docker.io/alextech777/dental-app:latest`. Render no despliega automáticamente nuevas imágenes del registro; se deben publicar en Docker Hub y activar **Manual Deploy** en el servicio existente. La versión con la revisión de agenda está publicada con la etiqueta `2026-11-02-agenda-manana` y también como `latest`.
 
-1. Conecta este repositorio en Render y crea una instancia desde el Blueprint `render.yaml`.
-2. Define `ADMIN_USERNAME` y `ADMIN_PASSWORD` como variables secretas en el asistente de Render. Usa una contraseña larga y única; no la guardes en Git.
-3. Espera a que termine el despliegue. Render asignará el dominio HTTPS del servicio; comprueba `/health` y después inicia sesión en la página principal.
-4. Conserva `DRY_RUN=true` y no agregues datos reales hasta haber verificado autenticación, persistencia del disco y respaldos.
+Para construir y publicar otra versión desde la raíz del repositorio en Windows PowerShell, usa una etiqueta nueva y luego actualiza `latest`:
 
-En `APP_ENV=production`, las pantallas no quedan disponibles si faltan las credenciales de administración; `/health` permanece público para la comprobación del proveedor y los webhooks conservan su validación de firma. La URL pública solo existe después de completar la conexión y el despliegue en una cuenta Render. Esta configuración por sí sola no crea una instancia ni permite afirmar que ya hay una URL funcionando.
+```powershell
+docker build -t alextech777/dental-app:2026-11-02-agenda-manana .
+docker push alextech777/dental-app:2026-11-02-agenda-manana
+docker tag alextech777/dental-app:2026-11-02-agenda-manana alextech777/dental-app:latest
+docker push alextech777/dental-app:latest
+```
+
+En Render, abre el servicio existente y agrega en **Environment** `APP_ENV=production`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DRY_RUN=true` y `SEED_DEMO=false`. Define el usuario y la contraseña allí; no los incluyas en el código ni en Git. Después abre **Manual Deploy** y despliega la última imagen. El middleware exige las credenciales antes de mostrar las pantallas cuando `APP_ENV=production`; `/health` permanece público y los webhooks conservan su validación de firma.
+
+Al finalizar, verifica `/health`, inicia sesión en la URL existente del servicio y confirma que aparece **Deja lista la agenda de mañana**. Conserva `DRY_RUN=true`. El plan gratuito de Render no ofrece disco persistente: usa esta instancia solo como demo y no guardes datos reales de pacientes. Antes de usar datos reales, configura almacenamiento persistente, respaldos y los controles operativos correspondientes.
 
 Iniciar - Aplicación local
 

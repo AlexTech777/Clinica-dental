@@ -62,6 +62,9 @@ calc()
 
 ## Publicación
 - Antes de crear recursos de hosting, identifica posibles cargos y pide autorización explícita.
-- No publiques la aplicación sin autenticación, HTTPS y almacenamiento persistente para SQLite; conserva `DRY_RUN=true` y `SEED_DEMO=false` en producción.
+- Si el usuario ya tiene un servicio Render, identifica su fuente (Git o imagen Docker) y reutilízalo; no crees otro servicio ni cambies el plan sin autorización.
+- Exige autenticación y HTTPS en servicios públicos. Para datos reales, exige almacenamiento persistente y respaldos; en planes efímeros limita el uso a demos sin datos personales.
+- Conserva `DRY_RUN=true` y `SEED_DEMO=false` en producción.
+- En servicios Render basados en imágenes, publica una etiqueta versionada y actualiza `latest`; confirma el despliegue manual antes de afirmar que la página en línea tiene los cambios.
 - Después de un despliegue autorizado, comprueba la URL pública y `/health`; solo entonces agrega la URL verificada a `README.md`.
 - Si el despliegue queda bloqueado, informa el requisito pendiente y no inventes una URL ni marques el lanzamiento como completado.
