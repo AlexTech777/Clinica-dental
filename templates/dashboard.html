@@ -1,6 +1,6 @@
 {% extends 'base.html' %}{% block title %}Resumen{% endblock %}{% block section_name %}Resumen{% endblock %}
 {% block content %}
-<div class="page-heading"><div><div class="eyebrow">VISTA GENERAL</div><h1>Hola, asistente <span class="wave">✳</span></h1><p class="subheading">Aquí tienes el consultorio al día. Un paso a la vez.</p></div><a class="button primary" href="/agenda#agendar">＋ <span>Agendar paciente</span></a></div>
+<div class="page-heading dashboard-hero"><div><div class="eyebrow">VISTA GENERAL <span class="hero-live"><i></i> CONSULTORIO EN ORDEN</span></div><h1>Hola, asistente <span class="wave">✳</span></h1><p class="subheading">Todo lo importante del consultorio, en un solo lugar.</p></div><a class="button primary" href="/agenda#agendar"><span aria-hidden="true">＋</span><span>Agendar paciente</span></a></div>
 <section class="metric-grid" aria-label="Métricas principales">
   <article class="metric-card"><div class="metric-top"><span>Citas hoy</span><span class="metric-icon blue">▦</span></div><strong>{{ today_appointments|length }}</strong><small>{{ tomorrow_appointments|length }} para mañana</small></article>
   <article class="metric-card"><div class="metric-top"><span>Confirmaciones</span><span class="metric-icon green">✓</span></div><strong>{{ confirmed_pct }}<i>%</i></strong><small>De próximas citas</small></article>
